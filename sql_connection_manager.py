@@ -19,10 +19,23 @@ class SqlConnectionManager:
         except pymssql.Error as db_err:
             print("Database Programming Error in SQL connection processing! ")
             sqlrc = str(db_err.args[0])
-            print("Exception code: " + str(sqlrc)
+            print("Exception code: " + str(sqlrc))
             if len(db_err) > 1:
                 print("Exception message: " + db_err.args[1]) 
         return self.SqlConnection
+    
+    def Connect(self):
+         try:
+             self.SqlConnection = pymssql.connect(server=self.Server, 
+                 database=self.DBname, 
+                 user=self.UserId, 
+                 password=self.Password)
+         except pymssql.Error as db_err:
+            print("Database Programming Error in SQL connection processing! ")
+            sqlrc = str(db_err.args[0])
+            print("Exception code: " + str(sqlrc))
+            if len(db_err) > 1:
+                print("Exception message: " + db_err.args[1]) 
 
     def __exit__(self, exctype=None, excinst=None, exctb=None):
         self.SqlConnection.close()
