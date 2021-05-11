@@ -1,4 +1,4 @@
-CREATE PROCEDURE InitDataModel AS
+--CREATE PROCEDURE initDataModel AS
 
 	-- If tables already exist, drop them	
 	IF OBJECT_ID(N'dbo.CareGiverSchedule', N'U') IS NOT NULL  
@@ -86,7 +86,7 @@ CREATE PROCEDURE InitDataModel AS
 		SlotStatus int  DEFAULT 0 NOT NULL
 			CONSTRAINT FK_CaregiverStatusCode FOREIGN KEY (SlotStatus) 
 				 REFERENCES AppointmentStatusCodes(StatusCodeId),
-		VaccineAppointmentId int DEFAULT 0 NOT NULL REFERENCES Appointments(AppointmentID)
+		VaccineAppointmentId int DEFAULT 0 NOT NULL
 		);
 
 	-- insert starter values into tables
@@ -102,8 +102,8 @@ CREATE PROCEDURE InitDataModel AS
 		(2, 'Moderna', 18, 2, 28),
 		(3, 'Johnson And Johnson', 18, 1, null);		
 
-	INSERT INTO Caregivers VALUES 
-		('Anthony Fauci'), 
-		('Hippocrates'),
-		('Jonas Salk')
+	--INSERT INTO Caregivers VALUES 
+	--	('Anthony Fauci'), 
+	--	('Hippocrates'),
+	--	('Jonas Salk')
 GO
