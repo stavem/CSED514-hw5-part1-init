@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
 
 
-            # Ass patients
+            # Add patients
             # Schedule the patients
             
             # Test cases done!

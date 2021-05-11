@@ -5,6 +5,8 @@ from sql_connection_manager import SqlConnectionManager
 from vaccine_caregiver import VaccineCaregiver
 from enums import *
 from utils import *
+
+
 # from covid19_vaccine import COVID19Vaccine as covid
 # from vaccine_patient import VaccinePatient as patient
 
@@ -18,7 +20,7 @@ class TestDB(unittest.TestCase):
                                                            Password=os.getenv("Password"))
             self.conn = self.connection_manager.Connect()
         except Exception:
-            self.fail("Connection to databse failed")
+            self.fail("Connection to database failed")
 
 
 class TestVaccineCaregiver(unittest.TestCase):
@@ -33,7 +35,7 @@ class TestVaccineCaregiver(unittest.TestCase):
                     clear_tables(sqlClient)
                     # create a new VaccineCaregiver object
                     self.caregiver_a = VaccineCaregiver(name="Steve Ma",
-                                                    cursor=cursor)
+                                                        cursor=cursor)
                     # check if the patient is correctly inserted into the database
                     sqlQuery = '''
                                SELECT *
@@ -50,7 +52,7 @@ class TestVaccineCaregiver(unittest.TestCase):
                     # clear the tables if an exception occurred
                     clear_tables(sqlClient)
                     self.fail("Creating caregiver failed")
-    
+
     def test_verify_schedule(self):
         with SqlConnectionManager(Server=os.getenv("Server"),
                                   DBname=os.getenv("DBName"),
@@ -62,7 +64,7 @@ class TestVaccineCaregiver(unittest.TestCase):
                     clear_tables(sqlClient)
                     # create a new VaccineCaregiver object
                     self.caregiver_a = VaccineCaregiver(name="Steve Ma",
-                                                    cursor=cursor)
+                                                        cursor=cursor)
                     # check if schedule has been correctly inserted into CareGiverSchedule
                     sqlQuery = '''
                                SELECT *
@@ -72,7 +74,7 @@ class TestVaccineCaregiver(unittest.TestCase):
                                '''
                     cursor.execute(sqlQuery)
                     rows = cursor.fetchall()
-                    hoursToSchedlue = [10,11]
+                    hoursToSchedlue = [10, 11]
                     minutesToSchedlue = [0, 15, 30, 45]
                     for row in rows:
                         slot_hour = row["SlotHour"]
