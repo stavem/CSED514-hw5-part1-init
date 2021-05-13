@@ -1,4 +1,4 @@
---CREATE PROCEDURE initDataModel AS
+CREATE PROCEDURE initDataModel AS
 
 	-- If tables already exist, drop them	
 	IF OBJECT_ID(N'dbo.CareGiverSchedule', N'U') IS NOT NULL  
