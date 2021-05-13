@@ -10,4 +10,4 @@ with SqlConnectionManager(Server=os.getenv("Server"),
     with sqlClient.cursor(as_dict=True) as cursor:
 
         # Add test pfizer doses
-        ReserveDoses('Pfizer', 1, cursor)
+        ReserveDoses('Pfizer', -1, cursor)

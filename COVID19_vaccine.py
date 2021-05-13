@@ -8,7 +8,6 @@ class COVID19Vaccine:
                        f"TotalDoses, DosesPerPatient, DaysBetweenDoses) VALUES ('{name}', '{supplier}'," \
                        f"{available_doses}, {reserved_doses}, {total_doses}, {doses_per_patient}," \
                        f"{days_between_doses})"
-
         try:
             cursor.execute(self.sqltext)
             cursor.connection.commit()
@@ -22,6 +21,7 @@ class COVID19Vaccine:
     pass
 
 def AddDoses(vaccine_name, doses, cursor):
+    """Increase the number of available vaccines doses."""
     sql_text = f"UPDATE Vaccines SET TotalDoses = TotalDoses + {doses}," \
     f"AvailableDoses = AvailableDoses + {doses} " \
     f"WHERE VaccineName = '{vaccine_name}'"
@@ -55,10 +55,12 @@ def check_available_doses(vaccine_name, cursor):
     return
 
 def ReserveDoses(vaccine_name, doses, cursor):
-
+    """Move doses from avialable to reserved."""
     if check_available_doses(vaccine_name, cursor) < doses:
         print('Not enough doses available to reserve!')
         return
+    elif doses < 1:
+        print('Number of doses must be greater than zero.')
     else:
         sql_update = f"UPDATE Vaccines SET ReservedDoses = ReservedDoses + {doses}," \
                    f"AvailableDoses = AvailableDoses - {doses} " \
