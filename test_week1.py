@@ -2,9 +2,7 @@ import unittest
 import os
 
 from sql_connection_manager import SqlConnectionManager
-from vaccine_caregiver import VaccineCaregiver
 from COVID19_vaccine import COVID19Vaccine
-from enums import *
 from utils import *
 
 
@@ -19,18 +17,17 @@ class TestCovid19Vaccine(unittest.TestCase):
                     # clear the tables before testing
                     clear_tables(sqlClient)
                     # create a new VaccineCaregiver object
-                    self.caregiver_a = COVID19Vaccine(name='Pfizer',
-                                                      supplier='Pfizer-BioNTech',
-                                                      available_doses=1,
-                                                      reserved_doses=3,
-                                                      total_doses=4,
-                                                      doses_per_patient=2,
-                                                      days_between_doses=21,
-                                                      cursor=cursor)
-                    # check if the patient is correctly inserted into the database
-                    sqlQuery = '''
-                               SELECT * FROM Vaccines WHERE VaccineName = 'Pfizer'
-                               '''
+                    self.vaccine_a = COVID19Vaccine(name="Pfizer",
+                                                    supplier="Pfizer-BioNTech",
+                                                    available_doses=1,
+                                                    reserved_doses=3,
+                                                    total_doses=4,
+                                                    doses_per_patient=2,
+                                                    days_between_doses=21,
+                                                    cursor=cursor)
+
+                    # check if the vaccine is correctly inserted into the database
+                    sqlQuery = "SELECT * FROM Vaccines WHERE VaccineName = 'Pfizer'"
                     cursor.execute(sqlQuery)
                     rows = cursor.fetchall()
                     if len(rows) < 1:
