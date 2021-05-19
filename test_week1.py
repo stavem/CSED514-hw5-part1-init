@@ -59,7 +59,7 @@ class TestCovid19Vaccine(unittest.TestCase):
                                                     days_between_doses=21,
                                                     cursor=cursor)
                     # Add test pfizer doses
-                    AddDoses('Pfizer', 2, cursor)
+                    COVID19Vaccine.AddDoses(self.vaccine_b, self.vaccine_b.name, 2, cursor)
 
                     # check if the vaccine is correctly inserted into the database
                     sqlQuery = "SELECT AvailableDoses, TotalDoses FROM Vaccines WHERE VaccineName = 'Pfizer'"
@@ -90,7 +90,7 @@ class TestCovid19Vaccine(unittest.TestCase):
                     clear_tables(sqlClient)
 
                     # make sure there is a vaccine in the db
-                    self.vaccine_b = COVID19Vaccine(name="Pfizer",
+                    self.vaccine_c = COVID19Vaccine(name="Pfizer",
                                                     supplier="Pfizer-BioNTech",
                                                     available_doses=5,
                                                     reserved_doses=3,
@@ -99,7 +99,7 @@ class TestCovid19Vaccine(unittest.TestCase):
                                                     days_between_doses=21,
                                                     cursor=cursor)
                     # Add test pfizer doses
-                    ReserveDoses('Pfizer', 2, cursor)
+                    COVID19Vaccine.ReserveDoses(self.vaccine_c, self.vaccine_c.name, 2, cursor)
 
                     # check if the vaccine is correctly inserted into the database
                     sqlQuery = "SELECT AvailableDoses, ReservedDoses, TotalDoses FROM Vaccines WHERE VaccineName = 'Pfizer'"

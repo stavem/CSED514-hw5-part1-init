@@ -17,7 +17,7 @@ class TestVaccinePatient(unittest.TestCase):
                     # clear the tables before testing
                     clear_tables(sqlClient)
                     # create a new VaccineCaregiver object
-                    self.caregiver_a = VaccinePatient(name="Karl Stavem",
+                    self.patient_a = VaccinePatient(name="Karl Stavem",
                                                       status=0,
                                                       cursor=cursor)
                     # check if the patient is correctly inserted into the database
