@@ -1,11 +1,14 @@
 from datetime import datetime
 from datetime import timedelta
 import pymssql
-from vaccine_reservation_scheduler import VaccineReservationScheduler
+
+
+# from vaccine_reservation_scheduler import VaccineReservationScheduler
 
 
 class VaccinePatient:
     ''' Adds patient to the db '''
+
     def __init__(self, name, status, cursor):
         self.sql_text = f"INSERT INTO Patients (PatientName, VaccineStatus) VALUES ('{name}', {status})"
         self.patientId = 0
@@ -36,19 +39,19 @@ class VaccinePatient:
 
         # check status
         update_sql = f'UPDATE CareGiverSchedule ' \
-                     f'SET SlotStatus = 1 WHERE CaregiverSlotSchedulingId = {caregiver_scheduling_id}'
+                     f'SET SlotStatus = 1 ' \
+                     f'WHERE CaregiverSlotSchedulingId = {caregiver_scheduling_id}'
 
         try:
-            cursor.execute(f"SELECT SlotStatus FROM [CareGiverSchedule] WHERE CaregiverSlotSchedulingId = {caregiver_scheduling_id}")
+            cursor.execute(
+                f"SELECT SlotStatus FROM CareGiverSchedule WHERE CaregiverSlotSchedulingId = {caregiver_scheduling_id}")
+            results = cursor.fetchall()
 
-            if len(cursor.fetchall()) < 1:
+            if len(results) < 1:
                 print('Invalid scheduling id')
                 return
 
-            results_row = cursor.fetchone()
-            slot_status = results_row['SlotStatus']
-
-            if slot_status != 0:
+            if results[0]['SlotStatus'] != 0:
                 print('Appointment Unavailable')
                 return
 
@@ -63,4 +66,7 @@ class VaccinePatient:
 
         # sql
         print('you made it here')
+        return
 
+    # def ScheduleAppointment(self, caregiver_scheduling_id, vaccine, cursor):
+    #     return

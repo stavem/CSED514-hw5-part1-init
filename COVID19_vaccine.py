@@ -1,20 +1,6 @@
 import pymssql
 
-def check_available_doses(vaccine_name, cursor):
-    """Verify that enough available doses are present in the db."""
-    sql_query = f"SELECT AvailableDoses FROM Vaccines WHERE VaccineName = '{vaccine_name}'"
 
-    try:
-        cursor.execute(sql_query)
-        rows = cursor.fetchall()
-        return rows[0]['AvailableDoses']
-    except pymssql.Error as db_err:
-        print("Database Programming Error in SQL Query processing for Vaccines! ")
-        print("Exception code: " + str(db_err.args[0]))
-        if len(db_err.args) > 1:
-            print("Exception message: " + db_err.args[1])
-        print("SQL text that resulted in an Error: " + sql_update)
-    return
 
 class COVID19Vaccine:
     def __init__(self, name, supplier, available_doses, reserved_doses, total_doses,
@@ -54,10 +40,25 @@ class COVID19Vaccine:
             print("SQL text that resulted in an Error: " + sql_text)
         return
 
+    def check_available_doses(self, cursor):
+        """Verify that enough available doses are present in the db."""
+        sql_query = f"SELECT AvailableDoses FROM Vaccines WHERE VaccineName = '{self.name}'"
+
+        try:
+            cursor.execute(sql_query)
+            rows = cursor.fetchall()
+            return rows[0]['AvailableDoses']
+        except pymssql.Error as db_err:
+            print("Database Programming Error in SQL Query processing for Vaccines! ")
+            print("Exception code: " + str(db_err.args[0]))
+            if len(db_err.args) > 1:
+                print("Exception message: " + db_err.args[1])
+            print("SQL text that resulted in an Error: " + sql_update)
+        return
 
     def ReserveDoses(self, vaccine_name, doses, cursor):
-        """Move doses from avialable to reserved."""
-        if check_available_doses(vaccine_name, cursor) < doses:
+        """Move doses from available to reserved."""
+        if COVID19Vaccine.check_available_doses(self, cursor) < doses:
             print('Not enough doses available to reserve!')
             return
         elif doses < 1:

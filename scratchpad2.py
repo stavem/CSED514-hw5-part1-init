@@ -2,6 +2,7 @@ from COVID19_vaccine import COVID19Vaccine
 import os
 from sql_connection_manager import SqlConnectionManager
 from vaccine_patient import VaccinePatient
+# from vaccine_reservation_scheduler import VaccineReservationScheduler
 import uuid
 
 with SqlConnectionManager(Server=os.getenv("Server"),
@@ -22,4 +23,3 @@ with SqlConnectionManager(Server=os.getenv("Server"),
                                    status=0,
                                    cursor=cursor)
 
-        VaccinePatient.ReserveAppointment(patient_a, 5, vaccine_a, cursor)

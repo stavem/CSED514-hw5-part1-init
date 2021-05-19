@@ -8,7 +8,10 @@ from sql_connection_manager import SqlConnectionManager
 from vaccine_caregiver import VaccineCaregiver
 from enums import *
 from utils import *
-from COVID19_vaccine import COVID19Vaccine as covid
+from COVID19_vaccine import COVID19Vaccine
+from vaccine_patient import VaccinePatient
+
+
 # from vaccine_patient import VaccinePatient as patient
 
 
@@ -17,23 +20,29 @@ class VaccineReservationScheduler:
     def __init__(self):
         return
 
-    def PutHoldOnAppointmentSlot(self, cursor):
+    def PutHoldOnAppointmentSlot(self, caregiver_id, work_day, slot_hour, slot_minute, cursor):
         ''' Method that reserves a CareGiver appointment slot &
         returns the unique scheduling slotid
         Should return 0 if no slot is available  or -1 if there is a database error'''
         # Note to students: this is a stub that needs to replaced with your code
         self.slotSchedulingId = 0
-        self.getAppointmentSQL = "SELECT SlotStatus FROM CareGiverSchedule"
+        self.getAppointmentSQL = f"SELECT CaregiverSlotSchedulingId FROM CareGiverSchedule " \
+                                 f"WHERE " \
+                                 f"SlotStatus = 0 " \
+                                 f"AND CaregiverId = {caregiver_id} " \
+                                 f"AND WorkDay = {work_day} " \
+                                 f"AND SlotHour = {slot_hour} " \
+                                 f"AND SlotMinute = {slot_minute} "
         try:
             cursor.execute(self.getAppointmentSQL)
             cursor.connection.commit()
             return self.slotSchedulingId
-        
+
         except pymssql.Error as db_err:
             print("Database Programming Error in SQL Query processing! ")
             print("Exception code: " + str(db_err.args[0]))
             if len(db_err.args) > 1:
-                print("Exception message: " + db_err.args[1])           
+                print("Exception message: " + db_err.args[1])
             print("SQL text that resulted in an Error: " + self.getAppointmentSQL)
             cursor.connection.rollback()
             return -1
@@ -53,40 +62,85 @@ class VaccineReservationScheduler:
         try:
             cursor.execute(self.getAppointmentSQL)
             return self.slotSchedulingId
-        except pymssql.Error as db_err:    
+        except pymssql.Error as db_err:
             print("Database Programming Error in SQL Query processing! ")
             print("Exception code: " + db_err.args[0])
             if len(db_err.args) > 1:
-                print("Exception message: " + str(db_err.args[1]))  
+                print("Exception message: " + str(db_err.args[1]))
             print("SQL text that resulted in an Error: " + self.getAppointmentSQL)
             return -1
 
+
 if __name__ == '__main__':
-        with SqlConnectionManager(Server=os.getenv("Server"),
-                                  DBname=os.getenv("DBName"),
-                                  UserId=os.getenv("UserID"),
-                                  Password=os.getenv("Password")) as sqlClient:
-            clear_tables(sqlClient)
-            vrs = VaccineReservationScheduler()
+    with SqlConnectionManager(Server=os.getenv("Server"),
+                              DBname=os.getenv("DBName"),
+                              UserId=os.getenv("UserID"),
+                              Password=os.getenv("Password")) as sqlClient:
+        clear_tables(sqlClient)
+        vrs = VaccineReservationScheduler()
 
-            # get a cursor from the SQL connection
-            dbcursor = sqlClient.cursor(as_dict=True)
+        # get a cursor from the SQL connection
+        dbcursor = sqlClient.cursor(as_dict=True)
 
-            # Iniialize the caregivers, patients & vaccine supply
-            caregiversList = []
-            caregiversList.append(VaccineCaregiver('Carrie Nation', dbcursor))
-            caregiversList.append(VaccineCaregiver('Clare Barton', dbcursor))
-            caregivers = {}
-            for cg in caregiversList:
-                cgid = cg.caregiverId
-                caregivers[cgid] = cg
+        # Iniialize the caregivers, patients & vaccine supply
+        caregiversList = []
+        caregiversList.append(VaccineCaregiver('Anthony Fauci', dbcursor))
+        caregiversList.append(VaccineCaregiver('Jonas Salk', dbcursor))
+        caregivers = {}
+        for cg in caregiversList:
+            cgid = cg.caregiverId
+            caregivers[cgid] = cg
 
-            # Add a vaccine and Add doses to inventory of the vaccine
+        # Add a vaccine and Add doses to inventory of the vaccine
+        pfizer = COVID19Vaccine(name="Pfizer",
+                                supplier="Pfizer-BioNTech",
+                                available_doses=5,
+                                reserved_doses=3,
+                                total_doses=8,
+                                doses_per_patient=2,
+                                days_between_doses=21,
+                                cursor=dbcursor)
 
+        moderna = COVID19Vaccine(name="Moderna",
+                                supplier="Moderna",
+                                available_doses=10,
+                                reserved_doses=2,
+                                total_doses=12,
+                                doses_per_patient=2,
+                                days_between_doses=28,
+                                cursor=dbcursor)
 
+        j_and_j = COVID19Vaccine(name="Johnson And Johnson",
+                                supplier="Johnson And Johnson",
+                                available_doses=10,
+                                reserved_doses=4,
+                                total_doses=14,
+                                doses_per_patient=1,
+                                days_between_doses=0,
+                                cursor=dbcursor)
 
-            # Add patients
-            # Schedule the patients
-            
-            # Test cases done!
-            clear_tables(sqlClient)
+        # Add patients
+        patient_a = VaccinePatient(name="Karl Stavem",
+                                   status=0,
+                                   cursor=dbcursor)
+
+        patient_b = VaccinePatient(name="John Doe",
+                                   status=0,
+                                   cursor=dbcursor)
+
+        patient_c = VaccinePatient(name="Jane Doe",
+                                   status=0,
+                                   cursor=dbcursor)
+
+        patient_d = VaccinePatient(name="John Wayne",
+                                   status=0,
+                                   cursor=dbcursor)
+
+        patient_e = VaccinePatient(name="John Doe Jr",
+                                   status=0,
+                                   cursor=dbcursor)
+
+        # Schedule the patients
+        patient_e.ReserveAppointment(caregiver_scheduling_id=5, vaccine=pfizer, cursor=dbcursor)
+        # Test cases done!
+        # clear_tables(sqlClient)

@@ -131,7 +131,7 @@ class TestCovid19Vaccine(unittest.TestCase):
                     clear_tables(sqlClient)
 
                     # make sure there is a vaccine in the db
-                    self.vaccine_b = COVID19Vaccine(name="Pfizer",
+                    self.vaccine_d = COVID19Vaccine(name="Pfizer",
                                                     supplier="Pfizer-BioNTech",
                                                     available_doses=5,
                                                     reserved_doses=3,
@@ -140,10 +140,10 @@ class TestCovid19Vaccine(unittest.TestCase):
                                                     days_between_doses=21,
                                                     cursor=cursor)
                     # Add test pfizer doses
-                    check_available_doses('Pfizer', cursor)
+                    COVID19Vaccine.check_available_doses(self.vaccine_d, cursor)
 
                     # check if the vaccine is correctly inserted into the database
-                    sqlQuery = "SELECT AvailableDoses FROM Vaccines WHERE VaccineName = 'Pfizer'"
+                    sqlQuery = f"SELECT AvailableDoses FROM Vaccines WHERE VaccineName = '{self.vaccine_d.name}'"
                     cursor.execute(sqlQuery)
                     rows = cursor.fetchall()
                     print(rows)
