@@ -23,7 +23,7 @@ class VaccineReservationScheduler:
         Should return 0 if no slot is available  or -1 if there is a database error'''
         # Note to students: this is a stub that needs to replaced with your code
         self.slotSchedulingId = 0
-        self.getAppointmentSQL = "SELECT SlotStatus FROM Vacci"
+        self.getAppointmentSQL = "SELECT SlotStatus FROM CareGiverSchedule"
         try:
             cursor.execute(self.getAppointmentSQL)
             cursor.connection.commit()

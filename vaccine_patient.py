@@ -1,6 +1,7 @@
 from datetime import datetime
 from datetime import timedelta
 import pymssql
+from vaccine_reservation_scheduler import VaccineReservationScheduler
 
 
 class VaccinePatient:
@@ -32,6 +33,33 @@ class VaccinePatient:
         then create a second appoint 3-6 weeks after the 1st appt
         be sure to retain the the identitys from the two vaccineappts reserved
         """
+
+        # check status
+        update_sql = f'UPDATE CareGiverSchedule ' \
+                     f'SET SlotStatus = 1 WHERE CaregiverSlotSchedulingId = {caregiver_scheduling_id}'
+
+        try:
+            cursor.execute(f"SELECT SlotStatus FROM [CareGiverSchedule] WHERE CaregiverSlotSchedulingId = {caregiver_scheduling_id}")
+
+            if len(cursor.fetchall()) < 1:
+                print('Invalid scheduling id')
+                return
+
+            results_row = cursor.fetchone()
+            slot_status = results_row['SlotStatus']
+
+            if slot_status != 0:
+                print('Appointment Unavailable')
+                return
+
+            cursor.execute(update_sql)
+            cursor.connection.commit()
+            print('Query executed successfully.')
+        except pymssql.Error as db_err:
+            print("Database Programming Error in SQL Query processing for Caregivers! ")
+            print("Exception code: " + str(db_err.args[0]))
+            if len(db_err.args) > 1:
+                print("Exception message: " + db_err.args[1])
 
         # sql
         print('you made it here')
