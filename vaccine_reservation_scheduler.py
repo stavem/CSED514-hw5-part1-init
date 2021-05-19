@@ -30,11 +30,14 @@ class VaccineReservationScheduler:
                                  f"WHERE " \
                                  f"SlotStatus = 0 " \
                                  f"AND CaregiverId = {caregiver_id} " \
-                                 f"AND WorkDay = {work_day} " \
+                                 f"AND WorkDay = '{work_day}' " \
                                  f"AND SlotHour = {slot_hour} " \
                                  f"AND SlotMinute = {slot_minute} "
         try:
             cursor.execute(self.getAppointmentSQL)
+            results = cursor.fetchall()
+            if len(results) > 0:
+                self.slotSchedulingId = results[0]['CaregiverSlotSchedulingId']
             cursor.connection.commit()
             return self.slotSchedulingId
 
@@ -82,7 +85,7 @@ if __name__ == '__main__':
         # get a cursor from the SQL connection
         dbcursor = sqlClient.cursor(as_dict=True)
 
-        # Iniialize the caregivers, patients & vaccine supply
+        # Iniialize the caregivers
         caregiversList = []
         caregiversList.append(VaccineCaregiver('Anthony Fauci', dbcursor))
         caregiversList.append(VaccineCaregiver('Jonas Salk', dbcursor))
@@ -91,7 +94,7 @@ if __name__ == '__main__':
             cgid = cg.caregiverId
             caregivers[cgid] = cg
 
-        # Add a vaccine and Add doses to inventory of the vaccine
+        # Add vaccine and Add doses to inventory of the vaccine
         pfizer = COVID19Vaccine(name="Pfizer",
                                 supplier="Pfizer-BioNTech",
                                 available_doses=5,
@@ -140,7 +143,18 @@ if __name__ == '__main__':
                                    status=0,
                                    cursor=dbcursor)
 
+        # check appointment and reserve
+        cg_schedule_id = vrs.PutHoldOnAppointmentSlot(2, '2021-05-18', 10, 0, dbcursor)
+
+        if cg_schedule_id > 0:
+            VaccinePatient.ReserveAppointment(patient_d, cg_schedule_id, pfizer, dbcursor)
+            COVID19Vaccine.ReserveDoses(pfizer, pfizer.name, 2, dbcursor)
+
         # Schedule the patients
-        patient_e.ReserveAppointment(caregiver_scheduling_id=5, vaccine=pfizer, cursor=dbcursor)
+        # patient_e.ReserveAppointment(caregiver_scheduling_id=5, vaccine=pfizer, cursor=dbcursor)
+
+
+
+
         # Test cases done!
         # clear_tables(sqlClient)

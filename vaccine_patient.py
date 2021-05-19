@@ -64,9 +64,26 @@ class VaccinePatient:
             if len(db_err.args) > 1:
                 print("Exception message: " + db_err.args[1])
 
+        sql_text = f"INSERT INTO [dbo].[VaccineAppointments] ([VaccineName],[PatientId],[CaregiverId]" \
+                          f",[ReservationDate],[ReservationStartHour],[ReservationStartMinute],[AppointmentDuration]" \
+                          f",[SlotStatus],[DateAdministered],[DoseNumber]) " \
+                          f"VALUES " \
+                          f"('pfizer',{self.patientId},2,'2021-05-18', 10, 0, 15, 3, '2021-05-18',1) " \
+                          f"UPDATE Patients SET VaccineStatus = 1 WHERE PatientId = {self.patientId}"
+
+        try:
+            cursor.execute(sql_text)
+
+        except pymssql.Error as db_err:
+            print("Database Programming Error in SQL Query processing for Caregivers! ")
+            print("Exception code: " + str(db_err.args[0]))
+            if len(db_err.args) > 1:
+                print("Exception message: " + db_err.args[1])
+
+
         # sql
         print('you made it here')
         return
 
-    # def ScheduleAppointment(self, caregiver_scheduling_id, vaccine, cursor):
-    #     return
+    def ScheduleAppointment(self, caregiver_scheduling_id, vaccine, cursor):
+        return

@@ -70,7 +70,7 @@ class COVID19Vaccine:
             try:
                 cursor.execute(sql_update)
                 cursor.connection.commit()
-                print(f"Query executed successfully. {doses} available doses added to {vaccine_name} vaccine.")
+                print(f"Query executed successfully. {doses} does of the {vaccine_name} vaccine have been reserved.")
             except pymssql.Error as db_err:
                 print("Database Programming Error in SQL Query processing for Vaccines! ")
                 print("Exception code: " + str(db_err.args[0]))
