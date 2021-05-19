@@ -37,7 +37,6 @@ class VaccinePatient:
         be sure to retain the the identitys from the two vaccineappts reserved
         """
 
-        # check status
         update_sql = f'UPDATE CareGiverSchedule ' \
                      f'SET SlotStatus = 1 ' \
                      f'WHERE CaregiverSlotSchedulingId = {caregiver_scheduling_id}'
