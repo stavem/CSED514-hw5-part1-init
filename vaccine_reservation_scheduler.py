@@ -39,6 +39,9 @@ class VaccineReservationScheduler:
             results = cursor.fetchall()
             if len(results) > 0:
                 self.slotSchedulingId = results[0]['CaregiverSlotSchedulingId']
+                cursor.execute("""UPDATE CareGiverSchedule SET SlotStatus = 1 
+                                                            WHERE CaregiverSlotSchedulingId = {slotSchedulingId}""".format(
+                    slotSchedulingId=self.slotSchedulingId))
             cursor.connection.commit()
             return self.slotSchedulingId
 
@@ -67,7 +70,7 @@ class VaccineReservationScheduler:
                                 slotSchedulingId=self.slotSchedulingId)
         try:
             cursor.execute(self.getAppointmentSQL)
-            cursor.execute("""UPDATE CareGiverSchedule SET SlotStatus = 1 
+            cursor.execute("""UPDATE CareGiverSchedule SET SlotStatus = 2 
                                             WHERE CaregiverSlotSchedulingId = {slotSchedulingId}""".format(
                 slotSchedulingId=self.slotSchedulingId))
             cursor.connection.commit()
@@ -130,37 +133,28 @@ if __name__ == '__main__':
                                  days_between_doses=0,
                                  cursor=dbcursor)
 
-        # Add patients
-        patient_a = VaccinePatient(name="Karl Stavem",
-                                   status=0,
-                                   cursor=dbcursor)
+        # Add five new patients
+        patient_a = VaccinePatient(name="Karl Stavem", status=0, cursor=dbcursor)
+        patient_b = VaccinePatient(name="John Doe", status=0, cursor=dbcursor)
+        patient_c = VaccinePatient(name="Jane Doe", status=0, cursor=dbcursor)
+        patient_d = VaccinePatient(name="John Wayne", status=0, cursor=dbcursor)
+        patient_e = VaccinePatient(name="John Doe Jr", status=0, cursor=dbcursor)
 
-        patient_b = VaccinePatient(name="John Doe",
-                                   status=0,
-                                   cursor=dbcursor)
-
-        patient_c = VaccinePatient(name="Jane Doe",
-                                   status=0,
-                                   cursor=dbcursor)
-
-        patient_d = VaccinePatient(name="John Wayne",
-                                   status=0,
-                                   cursor=dbcursor)
-
-        patient_e = VaccinePatient(name="John Doe Jr",
-                                   status=0,
-                                   cursor=dbcursor)
 
         # check appointment and reserve
         cg_schedule_id = vrs.PutHoldOnAppointmentSlot(1, '2021-05-19', 10, 0, dbcursor)
         print(cg_schedule_id)
         if cg_schedule_id > 0:
-            x = vrs.ScheduleAppointmentSlot(cg_schedule_id, dbcursor)
-            VaccinePatient.ReserveAppointment(patient_b, cg_schedule_id, j_and_j, dbcursor)
-            COVID19Vaccine.ReserveDoses(j_and_j, j_and_j.doses_per_patient, dbcursor)
+            VaccinePatient.ReserveAppointment(patient_b, cg_schedule_id, moderna, dbcursor)
+            COVID19Vaccine.ReserveDoses(moderna, moderna.doses_per_patient, dbcursor)
+            print(patient_b.vax_appt_id_1)
+            print(patient_b.vax_appt_id_2)
+        else:
+            print('No available appointments during this time.  Please select a new time')
 
-        # Schedule the patients
-        # patient_e.ReserveAppointment(caregiver_scheduling_id=5, vaccine=pfizer, cursor=dbcursor)
+            # Schedule the patients
+        VaccinePatient.ScheduleAppointment(patient_b, dbcursor)
+
 
         # Test cases done!
         # clear_tables(sqlClient)

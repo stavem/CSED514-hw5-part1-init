@@ -98,7 +98,7 @@ class VaccinePatient:
                             
                             DECLARE @apptid  INT = (SELECT TOP 1 CaregiverSlotSchedulingId 
                                                     FROM CareGiverSchedule 
-                                                    WHERE WorkDay >= DATEADD(DAY, 21, '2021-05-19')
+                                                    WHERE WorkDay >= DATEADD(DAY, {days}, '2021-05-19')
                                                     AND SlotStatus = 0)
                                                     
                             UPDATE CareGiverSchedule SET SlotStatus = 1 WHERE CaregiverSlotSchedulingId = @apptid
@@ -121,6 +121,7 @@ class VaccinePatient:
                             WHERE CaregiverSlotSchedulingId = @apptid
                             
                             COMMIT TRAN nextappt""".format(vaccine_name=vaccine.name,
+                                                           days=vaccine.days_between_doses,
                                                            patient_id=self.patientId)
 
         print(sql_next_appt)
@@ -142,5 +143,36 @@ class VaccinePatient:
                 print("SQL text that resulted in an Error: " + sql_next_appt)
         return
 
-    def ScheduleAppointment(self, caregiver_scheduling_id, vaccine, cursor):
+    def ScheduleAppointment(self, cursor):
+        """mark the appointment as scheduled
+        update the patient vaccine status
+        maintain the vaccine inventory
+        and any other scheduling actions for the caregiver to administer the vaccine doses to the patient"""
+
+        sql_text = """ BEGIN TRAN schedule_appt
+                    
+                        UPDATE VaccineAppointments
+                            SET SlotStatus = 2
+                            WHERE VaccineAppointmentId = {vax_appt_id}
+    
+    
+                        UPDATE Patients
+                            SET VaccineStatus = 2
+                            WHERE PatientId = {patientId}
+
+                    COMMIT TRAN schedule_appt""".format(vax_appt_id=self.vax_appt_id_1,
+                                                        patientId=self.patientId)
+        print(sql_text)
+
+        try:
+            cursor.execute(sql_text)
+            cursor.connection.commit()
+            print('Scheduled the vaccine appts.')
+
+        except pymssql.Error as db_err:
+            print("Database Programming Error in SQL Query processing for Patients! ")
+            print("Exception code: " + str(db_err.args[0]))
+            if len(db_err.args) > 1:
+                print("Exception message: " + db_err.args[1])
+            print("SQL text that resulted in an Error: " + sql_text)
         return
