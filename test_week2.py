@@ -83,6 +83,53 @@ class TestVaccinePatient(unittest.TestCase):
                     clear_tables(sqlClient)
                     self.fail("Reserving appointment failed")
 
+    def test_schedule_appointment(self):
+        with SqlConnectionManager(Server=os.getenv("Server"),
+                                  DBname=os.getenv("DBName"),
+                                  UserId=os.getenv("UserID"),
+                                  Password=os.getenv("Password")) as sqlClient:
+            with sqlClient.cursor(as_dict=True) as cursor:
+                try:
+                    # clear the tables before testing
+                    clear_tables(sqlClient)
+                    sample_caregiver = VaccineCaregiver(name="Dr. Fauci", cursor=cursor)
+                    sample_patient = VaccinePatient(name="Karl Stavem", status=0, cursor=cursor)
+                    sample_vaccine = COVID19Vaccine(name="Pfizer",
+                                                    supplier="Pfizer-BioNTech",
+                                                    available_doses=5,
+                                                    reserved_doses=3,
+                                                    total_doses=8,
+                                                    doses_per_patient=2,
+                                                    days_between_doses=21,
+                                                    cursor=cursor)
+                    appt = vrs()
+                    cg_schedule_id = vrs.PutHoldOnAppointmentSlot(appt, time.strftime('%Y-%m-%d %H:%M:%S'), 10, 0,
+                                                                  cursor)
+                    VaccinePatient.ReserveAppointment(sample_patient, cg_schedule_id, sample_vaccine, cursor)
+                    VaccinePatient.ScheduleAppointment(sample_patient, cursor)
+
+                    # check if the patient is correctly inserted into the database
+                    vax_query = f'SELECT TOP 1 SlotStatus FROM VaccineAppointments WHERE PatientId = {sample_patient.patientId} ORDER BY ReservationDate'
+                    cursor.execute(vax_query)
+                    rows = cursor.fetchall()
+                    if len(rows) < 1:
+                        self.fail("No Appointment Available To Schedule")
+                    elif rows[0]['SlotStatus'] != 2:
+                        self.fail("Failed to set the appointment status to scheduled.")
+
+                    pat_query = f'SELECT VaccineStatus FROM Patients WHERE PatientId = {sample_patient.patientId}'
+                    cursor.execute(pat_query)
+                    rows = cursor.fetchall()
+
+                    if len(rows) < 1:
+                        self.fail("No Patient Available To Schedule")
+                    elif rows[0]['VaccineStatus'] != 2:
+                        self.fail("Failed to set the vaccine status to queued.")
+
+                except Exception:
+                    # clear the tables if an exception occurred
+                    # clear_tables(sqlClient)
+                    self.fail("scheduling the appointment failed")
 
 if __name__ == '__main__':
     unittest.main()
