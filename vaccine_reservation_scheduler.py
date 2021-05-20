@@ -2,6 +2,7 @@ import datetime
 from enum import IntEnum
 import os
 import pymssql
+import time
 import traceback
 
 from sql_connection_manager import SqlConnectionManager
@@ -20,7 +21,7 @@ class VaccineReservationScheduler:
     def __init__(self):
         return
 
-    def PutHoldOnAppointmentSlot(self, caregiver_id, work_day, slot_hour, slot_minute, cursor):
+    def PutHoldOnAppointmentSlot(self, work_day, slot_hour, slot_minute, cursor):
         ''' Method that reserves a CareGiver appointment slot &
         returns the unique scheduling slotid
         Should return 0 if no slot is available  or -1 if there is a database error'''
@@ -30,7 +31,6 @@ class VaccineReservationScheduler:
         getAppointmentSQL = f"SELECT CaregiverSlotSchedulingId FROM CareGiverSchedule " \
                             f"WHERE " \
                             f"SlotStatus = 0 " \
-                            f"AND CaregiverId = {caregiver_id} " \
                             f"AND WorkDay = '{work_day}' " \
                             f"AND SlotHour = {slot_hour} " \
                             f"AND SlotMinute = {slot_minute} "
@@ -141,14 +141,12 @@ if __name__ == '__main__':
         patient_e = VaccinePatient(name="John Doe Jr", status=0, cursor=dbcursor)
 
 
-        # check appointment and reserve
-        cg_schedule_id = vrs.PutHoldOnAppointmentSlot(1, '2021-05-19', 10, 0, dbcursor)
+        # check appointment and reserve one
+        cg_schedule_id = vrs.PutHoldOnAppointmentSlot(time.strftime('%Y-%m-%d %H:%M:%S'), 10, 0, dbcursor)
         print(cg_schedule_id)
         if cg_schedule_id > 0:
             VaccinePatient.ReserveAppointment(patient_b, cg_schedule_id, moderna, dbcursor)
             COVID19Vaccine.ReserveDoses(moderna, moderna.doses_per_patient, dbcursor)
-            print(patient_b.vax_appt_id_1)
-            print(patient_b.vax_appt_id_2)
         else:
             print('No available appointments during this time.  Please select a new time')
 
