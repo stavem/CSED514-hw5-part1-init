@@ -152,7 +152,7 @@ if __name__ == '__main__':
                                    cursor=dbcursor)
 
         # check appointment and reserve
-        cg_schedule_id = vrs.PutHoldOnAppointmentSlot(1, '2021-05-19', 10, 30, dbcursor)
+        cg_schedule_id = vrs.PutHoldOnAppointmentSlot(1, '2021-05-19', 10, 0, dbcursor)
         print(cg_schedule_id)
         if cg_schedule_id > 0:
             x = vrs.ScheduleAppointmentSlot(cg_schedule_id, dbcursor)

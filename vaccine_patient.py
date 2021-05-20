@@ -82,8 +82,8 @@ class VaccinePatient:
             cursor.execute(sql_reserve)
             cursor.execute("SELECT @@IDENTITY AS 'Identity'; ")
             _identityRow = cursor.fetchone()
-            self.appt_id = _identityRow['Identity']
-            print(self.appt_id)
+            self.vax_appt_id_1 = _identityRow['Identity']
+            print(self.vax_appt_id_1)
             cursor.connection.commit()
             print('added to the vaccine appts.')
 
@@ -124,8 +124,21 @@ class VaccinePatient:
                                                            patient_id=self.patientId)
 
         print(sql_next_appt)
+        try:
+            cursor.execute(sql_next_appt)
+            cursor.execute("SELECT @@IDENTITY AS 'Identity'; ")
+            _identityRow = cursor.fetchone()
+            self.vax_appt_id_2 = _identityRow['Identity']
+            print(self.vax_appt_id_1)
+            cursor.connection.commit()
+            print('added to the vaccine appts.')
 
-
+        except pymssql.Error as db_err:
+            print("Database Programming Error in SQL Query processing for Patients! ")
+            print("Exception code: " + str(db_err.args[0]))
+            if len(db_err.args) > 1:
+                print("Exception message: " + db_err.args[1])
+            print("SQL text that resulted in an Error: " + sql_next_appt)
         return
 
     def ScheduleAppointment(self, caregiver_scheduling_id, vaccine, cursor):
