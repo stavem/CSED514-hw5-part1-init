@@ -39,9 +39,6 @@ class VaccineReservationScheduler:
             results = cursor.fetchall()
             if len(results) > 0:
                 self.slotSchedulingId = results[0]['CaregiverSlotSchedulingId']
-                cursor.execute("""UPDATE CareGiverSchedule SET SlotStatus = 1 
-                                WHERE CaregiverSlotSchedulingId = {slotSchedulingId}""".format(
-                    slotSchedulingId=self.slotSchedulingId))
             cursor.connection.commit()
             return self.slotSchedulingId
 
@@ -65,9 +62,15 @@ class VaccineReservationScheduler:
         if slotid < 1:
             return -2
         self.slotSchedulingId = slotid
-        self.getAppointmentSQL = "SELECT something... "
+        self.getAppointmentSQL = """SELECT * FROM CareGiverSchedule 
+                                WHERE CaregiverSlotSchedulingId = {slotSchedulingId}""".format(
+                                slotSchedulingId=self.slotSchedulingId)
         try:
             cursor.execute(self.getAppointmentSQL)
+            cursor.execute("""UPDATE CareGiverSchedule SET SlotStatus = 1 
+                                            WHERE CaregiverSlotSchedulingId = {slotSchedulingId}""".format(
+                slotSchedulingId=self.slotSchedulingId))
+            cursor.connection.commit()
             return self.slotSchedulingId
         except pymssql.Error as db_err:
             print("Database Programming Error in SQL Query processing! ")
@@ -75,6 +78,7 @@ class VaccineReservationScheduler:
             if len(db_err.args) > 1:
                 print("Exception message: " + str(db_err.args[1]))
             print("SQL text that resulted in an Error: " + self.getAppointmentSQL)
+            cursor.connection.rollback()
             return -1
 
 
@@ -151,6 +155,7 @@ if __name__ == '__main__':
         cg_schedule_id = vrs.PutHoldOnAppointmentSlot(1, '2021-05-19', 10, 30, dbcursor)
         print(cg_schedule_id)
         if cg_schedule_id > 0:
+            x = vrs.ScheduleAppointmentSlot(cg_schedule_id, dbcursor)
             VaccinePatient.ReserveAppointment(patient_b, cg_schedule_id, pfizer, dbcursor)
             COVID19Vaccine.ReserveDoses(j_and_j, j_and_j.doses_per_patient, dbcursor)
 

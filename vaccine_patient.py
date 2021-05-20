@@ -63,7 +63,6 @@ class VaccinePatient:
         """.format(cg_id=caregiver_scheduling_id,
                    vaccine_name=vaccine.name,
                    patientid=self.patientId)
-        print(sql_text)
         try:
             cursor.execute(sql_text)
             cursor.connection.commit()
