@@ -37,51 +37,43 @@ class VaccinePatient:
         be sure to retain the the identitys from the two vaccineappts reserved
         """
 
-        update_sql = f'UPDATE CareGiverSchedule ' \
-                     f'SET SlotStatus = 1 ' \
-                     f'WHERE CaregiverSlotSchedulingId = {caregiver_scheduling_id}'
-
-        try:
-            cursor.execute(
-                f"SELECT SlotStatus FROM CareGiverSchedule WHERE CaregiverSlotSchedulingId = {caregiver_scheduling_id}")
-            results = cursor.fetchall()
-
-            if len(results) < 1:
-                print('Invalid scheduling id')
-                return
-
-            if results[0]['SlotStatus'] != 0:
-                print('Appointment Unavailable')
-                return
-
-            cursor.execute(update_sql)
-            cursor.connection.commit()
-            print('Query executed successfully.')
-        except pymssql.Error as db_err:
-            print("Database Programming Error in SQL Query processing for Caregivers! ")
-            print("Exception code: " + str(db_err.args[0]))
-            if len(db_err.args) > 1:
-                print("Exception message: " + db_err.args[1])
-
-        sql_text = f"INSERT INTO [dbo].[VaccineAppointments] ([VaccineName],[PatientId],[CaregiverId]" \
-                          f",[ReservationDate],[ReservationStartHour],[ReservationStartMinute],[AppointmentDuration]" \
-                          f",[SlotStatus],[DateAdministered],[DoseNumber]) " \
-                          f"VALUES " \
-                          f"('pfizer',{self.patientId},2,'2021-05-18', 10, 0, 15, 3, '2021-05-18',1) " \
-                          f"UPDATE Patients SET VaccineStatus = 1 WHERE PatientId = {self.patientId}"
-
+        sql_text = """BEGIN TRAN reserveappt
+                        DECLARE @status INT
+                        
+                        -- Confirm the slot status is 0
+                        SET @status = (SELECT SlotStatus FROM CareGiverSchedule 
+                        WHERE CaregiverSlotSchedulingId = {cg_id})	
+                        
+                        -- CREATE INITIAL ENTRY INTO VaccineAppt Table AND FLAG PATIENT as queued for 1 dose
+                        IF (@status = 1) 
+                            BEGIN
+                            INSERT INTO [dbo].[VaccineAppointments] 
+                            ([VaccineName],[PatientId],[CaregiverId],[ReservationDate],
+                            [ReservationStartHour],[ReservationStartMinute],[AppointmentDuration],
+                            [SlotStatus],[DateAdministered],[DoseNumber]) 
+                            VALUES 
+                            ('{vaccine_name}',1, 2,'2021-05-18', 10, 0, 15, 3, '2021-05-18', 1)
+                            UPDATE Patients SET VaccineStatus = 1 WHERE PatientId = {patientid}
+                            COMMIT TRAN reserveappt
+                            END
+                        ELSE
+                            BEGIN
+                            ROLLBACK TRAN reserveappt
+                            END
+        """.format(cg_id=caregiver_scheduling_id,
+                   vaccine_name=vaccine.name,
+                   patientid=self.patientId)
+        print(sql_text)
         try:
             cursor.execute(sql_text)
-
+            cursor.connection.commit()
+            print('added to the vaccine appts.')
         except pymssql.Error as db_err:
-            print("Database Programming Error in SQL Query processing for Caregivers! ")
+            print("Database Programming Error in SQL Query processing for Patients! ")
             print("Exception code: " + str(db_err.args[0]))
             if len(db_err.args) > 1:
                 print("Exception message: " + db_err.args[1])
-
-
-        # sql
-        print('you made it here')
+            print("SQL text that resulted in an Error: " + sql_text)
         return
 
     def ScheduleAppointment(self, caregiver_scheduling_id, vaccine, cursor):

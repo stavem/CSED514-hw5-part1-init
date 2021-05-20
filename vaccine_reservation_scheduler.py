@@ -26,18 +26,22 @@ class VaccineReservationScheduler:
         Should return 0 if no slot is available  or -1 if there is a database error'''
         # Note to students: this is a stub that needs to replaced with your code
         self.slotSchedulingId = 0
-        self.getAppointmentSQL = f"SELECT CaregiverSlotSchedulingId FROM CareGiverSchedule " \
-                                 f"WHERE " \
-                                 f"SlotStatus = 0 " \
-                                 f"AND CaregiverId = {caregiver_id} " \
-                                 f"AND WorkDay = '{work_day}' " \
-                                 f"AND SlotHour = {slot_hour} " \
-                                 f"AND SlotMinute = {slot_minute} "
+
+        getAppointmentSQL = f"SELECT CaregiverSlotSchedulingId FROM CareGiverSchedule " \
+                            f"WHERE " \
+                            f"SlotStatus = 0 " \
+                            f"AND CaregiverId = {caregiver_id} " \
+                            f"AND WorkDay = '{work_day}' " \
+                            f"AND SlotHour = {slot_hour} " \
+                            f"AND SlotMinute = {slot_minute} "
         try:
-            cursor.execute(self.getAppointmentSQL)
+            cursor.execute(getAppointmentSQL)
             results = cursor.fetchall()
             if len(results) > 0:
                 self.slotSchedulingId = results[0]['CaregiverSlotSchedulingId']
+                cursor.execute("""UPDATE CareGiverSchedule SET SlotStatus = 1 
+                                WHERE CaregiverSlotSchedulingId = {slotSchedulingId}""".format(
+                    slotSchedulingId=self.slotSchedulingId))
             cursor.connection.commit()
             return self.slotSchedulingId
 
@@ -46,7 +50,7 @@ class VaccineReservationScheduler:
             print("Exception code: " + str(db_err.args[0]))
             if len(db_err.args) > 1:
                 print("Exception message: " + db_err.args[1])
-            print("SQL text that resulted in an Error: " + self.getAppointmentSQL)
+            print("SQL text that resulted in an Error: " + getAppointmentSQL)
             cursor.connection.rollback()
             return -1
 
@@ -105,22 +109,22 @@ if __name__ == '__main__':
                                 cursor=dbcursor)
 
         moderna = COVID19Vaccine(name="Moderna",
-                                supplier="Moderna",
-                                available_doses=10,
-                                reserved_doses=2,
-                                total_doses=12,
-                                doses_per_patient=2,
-                                days_between_doses=28,
-                                cursor=dbcursor)
+                                 supplier="Moderna",
+                                 available_doses=10,
+                                 reserved_doses=2,
+                                 total_doses=12,
+                                 doses_per_patient=2,
+                                 days_between_doses=28,
+                                 cursor=dbcursor)
 
         j_and_j = COVID19Vaccine(name="Johnson And Johnson",
-                                supplier="Johnson And Johnson",
-                                available_doses=10,
-                                reserved_doses=4,
-                                total_doses=14,
-                                doses_per_patient=1,
-                                days_between_doses=0,
-                                cursor=dbcursor)
+                                 supplier="Johnson And Johnson",
+                                 available_doses=10,
+                                 reserved_doses=4,
+                                 total_doses=14,
+                                 doses_per_patient=1,
+                                 days_between_doses=0,
+                                 cursor=dbcursor)
 
         # Add patients
         patient_a = VaccinePatient(name="Karl Stavem",
@@ -144,17 +148,14 @@ if __name__ == '__main__':
                                    cursor=dbcursor)
 
         # check appointment and reserve
-        cg_schedule_id = vrs.PutHoldOnAppointmentSlot(2, '2021-05-18', 10, 0, dbcursor)
-
+        cg_schedule_id = vrs.PutHoldOnAppointmentSlot(1, '2021-05-19', 10, 30, dbcursor)
+        print(cg_schedule_id)
         if cg_schedule_id > 0:
-            VaccinePatient.ReserveAppointment(patient_d, cg_schedule_id, pfizer, dbcursor)
-            COVID19Vaccine.ReserveDoses(pfizer, pfizer.name, 2, dbcursor)
+            VaccinePatient.ReserveAppointment(patient_b, cg_schedule_id, pfizer, dbcursor)
+            COVID19Vaccine.ReserveDoses(j_and_j, j_and_j.doses_per_patient, dbcursor)
 
         # Schedule the patients
         # patient_e.ReserveAppointment(caregiver_scheduling_id=5, vaccine=pfizer, cursor=dbcursor)
-
-
-
 
         # Test cases done!
         # clear_tables(sqlClient)
