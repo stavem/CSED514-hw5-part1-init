@@ -37,12 +37,14 @@ class VaccinePatient:
         be sure to retain the the identitys from the two vaccineappts reserved
         """
 
-        sql_text = """BEGIN TRAN reserveappt
+        sql_reserve = """BEGIN TRAN reserveappt
                         DECLARE @status INT
+                       
                         
                         -- Confirm the slot status is 0
                         SET @status = (SELECT SlotStatus FROM CareGiverSchedule 
                         WHERE CaregiverSlotSchedulingId = {cg_id})	
+                        
                         
                         -- CREATE INITIAL ENTRY INTO VaccineAppt Table AND FLAG PATIENT as queued for 1 dose
                         IF (@status = 1) 
@@ -50,9 +52,20 @@ class VaccinePatient:
                             INSERT INTO [dbo].[VaccineAppointments] 
                             ([VaccineName],[PatientId],[CaregiverId],[ReservationDate],
                             [ReservationStartHour],[ReservationStartMinute],[AppointmentDuration],
-                            [SlotStatus],[DateAdministered],[DoseNumber]) 
-                            VALUES 
-                            ('{vaccine_name}',1, 2,'2021-05-18', 10, 0, 15, 3, '2021-05-18', 1)
+                            [SlotStatus],[DoseNumber]) 
+                            SELECT
+                            '{vaccine_name}',
+                            {patientid}, 
+                            CaregiverId,
+                            WorkDay, 
+                            SlotHour, 
+                            SlotMinute, 
+                            15, 
+                            1, 
+                            1
+                            FROM
+                            CareGiverSchedule
+                            WHERE CaregiverSlotSchedulingId = {cg_id}
                             UPDATE Patients SET VaccineStatus = 1 WHERE PatientId = {patientid}
                             COMMIT TRAN reserveappt
                             END
@@ -63,16 +76,56 @@ class VaccinePatient:
         """.format(cg_id=caregiver_scheduling_id,
                    vaccine_name=vaccine.name,
                    patientid=self.patientId)
+
+        print(sql_reserve)
         try:
-            cursor.execute(sql_text)
+            cursor.execute(sql_reserve)
+            cursor.execute("SELECT @@IDENTITY AS 'Identity'; ")
+            _identityRow = cursor.fetchone()
+            self.appt_id = _identityRow['Identity']
+            print(self.appt_id)
             cursor.connection.commit()
             print('added to the vaccine appts.')
+
         except pymssql.Error as db_err:
             print("Database Programming Error in SQL Query processing for Patients! ")
             print("Exception code: " + str(db_err.args[0]))
             if len(db_err.args) > 1:
                 print("Exception message: " + db_err.args[1])
-            print("SQL text that resulted in an Error: " + sql_text)
+            print("SQL text that resulted in an Error: " + sql_reserve)
+
+        sql_next_appt = """BEGIN TRAN nextappt
+                            
+                            DECLARE @apptid  INT = (SELECT TOP 1 CaregiverSlotSchedulingId 
+                                                    FROM CareGiverSchedule 
+                                                    WHERE WorkDay >= DATEADD(DAY, 21, '2021-05-19')
+                                                    AND SlotStatus = 0)
+                                                    
+                            UPDATE CareGiverSchedule SET SlotStatus = 1 WHERE CaregiverSlotSchedulingId = @apptid
+                            
+                            INSERT INTO [dbo].[VaccineAppointments] 
+                            ([VaccineName],[PatientId],[CaregiverId],[ReservationDate],
+                            [ReservationStartHour],[ReservationStartMinute],[AppointmentDuration],
+                            [SlotStatus],[DoseNumber]) 
+                            SELECT 
+                            '{vaccine_name}', 
+                            {patient_id}, 
+                            CaregiverId, 
+                            WorkDay, 
+                            SlotHour, 
+                            SlotMinute,
+                            15,
+                            SlotStatus,
+                            2
+                            FROM CareGiverSchedule 
+                            WHERE CaregiverSlotSchedulingId = @apptid
+                            
+                            COMMIT TRAN nextappt""".format(vaccine_name=vaccine.name,
+                                                           patient_id=self.patientId)
+
+        print(sql_next_appt)
+
+
         return
 
     def ScheduleAppointment(self, caregiver_scheduling_id, vaccine, cursor):
