@@ -1,6 +1,5 @@
 import unittest
 from sql_connection_manager import SqlConnectionManager
-from vaccine_caregiver import VaccineCaregiver
 from vaccine_patient import VaccinePatient
 from utils import *
 import os

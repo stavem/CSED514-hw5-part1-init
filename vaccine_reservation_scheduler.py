@@ -156,7 +156,7 @@ if __name__ == '__main__':
         print(cg_schedule_id)
         if cg_schedule_id > 0:
             x = vrs.ScheduleAppointmentSlot(cg_schedule_id, dbcursor)
-            VaccinePatient.ReserveAppointment(patient_b, cg_schedule_id, pfizer, dbcursor)
+            VaccinePatient.ReserveAppointment(patient_b, cg_schedule_id, j_and_j, dbcursor)
             COVID19Vaccine.ReserveDoses(j_and_j, j_and_j.doses_per_patient, dbcursor)
 
         # Schedule the patients
