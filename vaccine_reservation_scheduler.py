@@ -141,18 +141,3 @@ if __name__ == '__main__':
         patient_e = VaccinePatient(name="John Doe Jr", status=0, cursor=dbcursor)
 
 
-        # check appointment and reserve one
-        cg_schedule_id = vrs.PutHoldOnAppointmentSlot(time.strftime('%Y-%m-%d %H:%M:%S'), 10, 0, dbcursor)
-        print(cg_schedule_id)
-        if cg_schedule_id > 0:
-            VaccinePatient.ReserveAppointment(patient_b, cg_schedule_id, moderna, dbcursor)
-            COVID19Vaccine.ReserveDoses(moderna, moderna.doses_per_patient, dbcursor)
-        else:
-            print('No available appointments during this time.  Please select a new time')
-
-            # Schedule the patients
-        VaccinePatient.ScheduleAppointment(patient_b, dbcursor)
-
-
-        # Test cases done!
-        # clear_tables(sqlClient)

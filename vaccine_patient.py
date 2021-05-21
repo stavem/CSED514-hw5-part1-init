@@ -152,7 +152,10 @@ class VaccinePatient:
                             SET SlotStatus = 2
                             WHERE VaccineAppointmentId = {vax_appt_id}
     
-    
+                        UPDATE CareGiverSchedule
+                            SET SlotStatus = 2
+                            WHERE VaccineAppointmentId = {vax_appt_id}
+                            
                         UPDATE Patients
                             SET VaccineStatus = 2
                             WHERE PatientId = {patientId}

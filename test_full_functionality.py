@@ -14,7 +14,7 @@ class TestFullFunctionality(unittest.TestCase):
     @staticmethod
     def schedule_appointment(patient, vaccine, day, hour, minute, cursor):
 
-        # check if appt is available
+        # check if appointment is available
         cg_schedule_id = vrs.PutHoldOnAppointmentSlot(vrs(), day, hour, minute, cursor)
 
         # make sure there are enough doses of the vaccine to hold the appointment
@@ -22,9 +22,10 @@ class TestFullFunctionality(unittest.TestCase):
 
         if cg_schedule_id == 0:
             print('No available appointments on this day.  Please select a new day.')
-            return
+            return -1
         elif vax_available < vaccine.doses_per_patient:
             print('Not enough of this vaccine available.  Please select a new vaccine.')
+            return -1
 
         # if an appointment is available and enough vaccinations, reserve the appointment.
         else:
@@ -38,13 +39,13 @@ class TestFullFunctionality(unittest.TestCase):
             print('Appointment 1 (scheduled): ' + str(patient.vax_appt_id_1))
             if vaccine.name in ['Pfizer', 'Moderna']:
                 print('Appointment 2 (on-hold): ' + str(patient.vax_appt_id_2))
-        return
+            return 1
 
     def test_full_scope(self):
         """This unit test performs all actions outlined in the homework:
         * Allocates two caregivers
         * Adds three vaccines
-        * Creates and schedules 5 patients, only two of which have vaccines supplied"""
+        * Creates and schedules 5 patients, only two of which succeed."""
         with SqlConnectionManager(Server=os.getenv("Server"),
                                   DBname=os.getenv("DBName"),
                                   UserId=os.getenv("UserID"),
@@ -98,14 +99,55 @@ class TestFullFunctionality(unittest.TestCase):
             patient_d = VaccinePatient(name="John Wayne", status=0, cursor=dbcursor)
             patient_e = VaccinePatient(name="John Doe Jr", status=0, cursor=dbcursor)
 
-            TestFullFunctionality.schedule_appointment(patient=patient_a,
-                                                       vaccine=pfizer,
-                                                       day=time.strftime('%Y-%m-%d %H:%M:%S'),
-                                                       hour=10,
-                                                       minute=0,
-                                                       cursor=dbcursor)
+            tff = TestFullFunctionality()
+            # test successfully scheduling a patient today
+            appointment_1 = tff.schedule_appointment(patient=patient_a,
+                                                     vaccine=pfizer,
+                                                     day=time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                     hour=10,
+                                                     minute=0,
+                                                     cursor=dbcursor)
 
-            # self.assertEqual(True, False)
+            # test successfully scheduling a patient for the same time window today
+            appointment_2 = tff.schedule_appointment(patient=patient_b,
+                                                     vaccine=pfizer,
+                                                     day=time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                     hour=10,
+                                                     minute=0,
+                                                     cursor=dbcursor)
+
+            # test unsuccessfully scheduling a patient for the same time window today
+            # no available caregivers
+            appointment_3 = tff.schedule_appointment(patient=patient_c,
+                                                     vaccine=pfizer,
+                                                     day=time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                     hour=10,
+                                                     minute=0,
+                                                     cursor=dbcursor)
+
+            # test unsuccessfully scheduling a patient today
+            # not enough moderna vaccine available
+            appointment_4 = tff.schedule_appointment(patient=patient_d,
+                                                     vaccine=moderna,
+                                                     day=time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                     hour=10,
+                                                     minute=15,
+                                                     cursor=dbcursor)
+
+            # test unsuccessfully scheduling a patient today
+            # not enough J&J vaccine available
+            appointment_5 = tff.schedule_appointment(patient=patient_e,
+                                                     vaccine=j_and_j,
+                                                     day=time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                     hour=10,
+                                                     minute=30,
+                                                     cursor=dbcursor)
+
+            self.assertEqual(appointment_1, 1)  # valid appointment should pass
+            self.assertEqual(appointment_2, 1)  # same time slot, different caregiver should pass
+            self.assertEqual(appointment_3, -1)  # no caregivers available during timeslot
+            self.assertEqual(appointment_4, -1)  # not enough moderna vaccine available
+            self.assertEqual(appointment_5, -1)  # not enough j&j vaccine available
 
 
 if __name__ == '__main__':
