@@ -10,6 +10,36 @@ import os
 
 
 class TestFullFunctionality(unittest.TestCase):
+
+    @staticmethod
+    def schedule_appointment(patient, vaccine, day, hour, minute, cursor):
+
+        # check if appt is available
+        cg_schedule_id = vrs.PutHoldOnAppointmentSlot(vrs(), day, hour, minute, cursor)
+
+        # make sure there are enough doses of the vaccine to hold the appointment
+        vax_available = COVID19Vaccine.check_available_doses(vaccine, cursor)
+
+        if cg_schedule_id == 0:
+            print('No available appointments on this day.  Please select a new day.')
+            return
+        elif vax_available < vaccine.doses_per_patient:
+            print('Not enough of this vaccine available.  Please select a new vaccine.')
+
+        # if an appointment is available and enough vaccinations, reserve the appointment.
+        else:
+            COVID19Vaccine.ReserveDoses(vaccine, vaccine.doses_per_patient, cursor)
+            VaccinePatient.ReserveAppointment(patient, cg_schedule_id, vaccine, cursor)
+
+            # after reservation schedule the appointment
+            VaccinePatient.ScheduleAppointment(patient, cursor)
+
+            print('Appointment scheduled successfully.')
+            print('Appointment 1 (scheduled): ' + str(patient.vax_appt_id_1))
+            if vaccine.name in ['Pfizer', 'Moderna']:
+                print('Appointment 2 (on-hold): ' + str(patient.vax_appt_id_2))
+        return
+
     def test_full_scope(self):
         """This unit test performs all actions outlined in the homework:
         * Allocates two caregivers
@@ -20,6 +50,7 @@ class TestFullFunctionality(unittest.TestCase):
                                   UserId=os.getenv("UserID"),
                                   Password=os.getenv("Password")) as sqlClient:
             clear_tables(sqlClient)
+
             # get a cursor from the SQL connection
             dbcursor = sqlClient.cursor(as_dict=True)
 
@@ -35,27 +66,27 @@ class TestFullFunctionality(unittest.TestCase):
             # Add vaccine and Add doses to inventory of the vaccine
             pfizer = COVID19Vaccine(name="Pfizer",
                                     supplier="Pfizer-BioNTech",
-                                    available_doses=5,
-                                    reserved_doses=3,
-                                    total_doses=8,
+                                    available_doses=4,
+                                    reserved_doses=0,
+                                    total_doses=4,
                                     doses_per_patient=2,
                                     days_between_doses=21,
                                     cursor=dbcursor)
 
             moderna = COVID19Vaccine(name="Moderna",
                                      supplier="Moderna",
-                                     available_doses=10,
-                                     reserved_doses=2,
-                                     total_doses=12,
+                                     available_doses=1,
+                                     reserved_doses=5,
+                                     total_doses=6,
                                      doses_per_patient=2,
                                      days_between_doses=28,
                                      cursor=dbcursor)
 
             j_and_j = COVID19Vaccine(name="Johnson And Johnson",
                                      supplier="Johnson And Johnson",
-                                     available_doses=10,
-                                     reserved_doses=4,
-                                     total_doses=14,
+                                     available_doses=0,
+                                     reserved_doses=0,
+                                     total_doses=0,
                                      doses_per_patient=1,
                                      days_between_doses=0,
                                      cursor=dbcursor)
@@ -67,18 +98,12 @@ class TestFullFunctionality(unittest.TestCase):
             patient_d = VaccinePatient(name="John Wayne", status=0, cursor=dbcursor)
             patient_e = VaccinePatient(name="John Doe Jr", status=0, cursor=dbcursor)
 
-            # check appointment and reserve one
-
-            cg_schedule_id = vrs.PutHoldOnAppointmentSlot(vrs(), time.strftime('%Y-%m-%d %H:%M:%S'), 10, 0, dbcursor)
-            print(cg_schedule_id)
-            if cg_schedule_id > 0:
-                VaccinePatient.ReserveAppointment(patient_b, cg_schedule_id, moderna, dbcursor)
-                COVID19Vaccine.ReserveDoses(moderna, moderna.doses_per_patient, dbcursor)
-            else:
-                print('No available appointments during this time.  Please select a new time')
-
-                # Schedule the patients
-            VaccinePatient.ScheduleAppointment(patient_b, dbcursor)
+            TestFullFunctionality.schedule_appointment(patient=patient_a,
+                                                       vaccine=pfizer,
+                                                       day=time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                       hour=10,
+                                                       minute=0,
+                                                       cursor=dbcursor)
 
             # self.assertEqual(True, False)
 

@@ -55,14 +55,14 @@ class COVID19Vaccine:
             print("Exception code: " + str(db_err.args[0]))
             if len(db_err.args) > 1:
                 print("Exception message: " + db_err.args[1])
-            print("SQL text that resulted in an Error: " + sql_update)
+            print("SQL text that resulted in an Error: " + sql_query)
         return
 
     def ReserveDoses(self, doses, cursor):
         """Move doses from available to reserved."""
         if COVID19Vaccine.check_available_doses(self, cursor) < doses:
             print('Not enough doses available to reserve!')
-            return
+            return -1
         elif doses < 1:
             print('Number of doses must be greater than zero.')
         else:

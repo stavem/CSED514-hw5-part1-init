@@ -77,7 +77,6 @@ class VaccinePatient:
                    vaccine_name=vaccine.name,
                    patientid=self.patientId)
 
-        print(sql_reserve)
         try:
             cursor.execute(sql_reserve)
             cursor.execute("SELECT @@IDENTITY AS 'Identity'; ")
@@ -123,8 +122,6 @@ class VaccinePatient:
                             COMMIT TRAN nextappt""".format(vaccine_name=vaccine.name,
                                                            days=vaccine.days_between_doses,
                                                            patient_id=self.patientId)
-
-        print(sql_next_appt)
         if vaccine.doses_per_patient > 1:
             try:
                 cursor.execute(sql_next_appt)
@@ -162,8 +159,6 @@ class VaccinePatient:
 
                     COMMIT TRAN schedule_appt""".format(vax_appt_id=self.vax_appt_id_1,
                                                         patientId=self.patientId)
-        print(sql_text)
-
         try:
             cursor.execute(sql_text)
             cursor.connection.commit()
